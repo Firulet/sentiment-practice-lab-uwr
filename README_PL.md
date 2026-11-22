@@ -1,38 +1,55 @@
-# Sentiment & Emotion Analysis — osobna aplikacja Streamlit
+# Sentiment & Emotion Analysis - Interactive Laboratory (wersja 2)
 
-Kurs: **Introduction to Data Science and Society**.
+Nowa, niezależna aplikacja do przedmiotu **Introduction to Data Science and Society**.
 
-## Co jest w środku?
+## Co zmieniono
 
-- `app.py` i `content.py` — kod nowego laboratorium (PL / EN).
-- `.streamlit/config.toml` — jasny motyw początkowy; teksty i wykresy respektują także systemowy tryb ciemny Streamlit (przełączany przez użytkownika w menu aplikacji).
-- `requirements.txt` — zależności.
-- **24 pytania z objaśnieniami**, 10 scenariuszy interpretacyjnych, symulator słownika, wieloetykietowe emocje, rozkład etykiet, macierz pomyłek, interaktywna ewaluacja i opcjonalny klasyfikator TF-IDF + regresja logistyczna.
-- Brak zapisu odpowiedzi, numerów indeksów i połączenia Google Sheets.
+- Więcej eksperymentów na prawdziwych danych i mniej quizów; dotychczasowe pytania nie są automatycznie wyświetlane.
+- Słownik, wieloetykietowe emocje, klucz kodowy, dwaj niezależni anotatorzy.
+- Porównywanie etykiet GoEmotions po filtrowaniu danych i zmienianiu prób.
+- TF-IDF (1–2-gramy) + regresja logistyczna one-vs-rest (8 klas): wyjaśnione prostym językiem.
+- Prawdziwa ewaluacja modelu na niewidzianej części testowej GoEmotions: próg klasyfikacji, TP/FP/FN/TN, precision/recall/F1 i zmiana wypowiedzi.
+- Osobny symulator ręcznej macierzy pomyłek, jednoznacznie oznaczony jako hipotetyczny.
+- Sześć klasycznych zasad Cialdiniego oraz samodzielne kodowanie rzeczywistych wypowiedzi z PersuasionForGood.
+- Końcowy projekt badawczy wykorzystujący prawdziwe etykiety GoEmotions, nie wymyśloną bazę.
+- PL / EN i wygląd oparty na motywach Streamlit, bez kont studentów, zapisu odpowiedzi czy zewnętrznego API AI do ich tekstów.
 
-## Publikacja jako osobna aplikacja
+## Ważne rozróżnienia badawcze
 
-1. Nie ruszaj `Firulet/data-society-research-academy` ani `sna-practice-lab-uwr`.
-2. Na GitHub utwórz **nowe repozytorium** (np. `sentiment-practice-lab-uwr`).
-3. Wgraj **pliki z wnętrza katalogu**, tak by `app.py`, `content.py` i `requirements.txt` były w katalogu głównym. Wgraj też ukryty katalog `.streamlit` (jeśli GitHub nie pozwala przeciągnąć go, utwórz `.streamlit/config.toml` ręcznie).
-4. Otwórz https://share.streamlit.io/ , kliknij Create app, wskaż repo, gałąź `main`, ścieżkę `app.py`.
-5. Wybierz np. `sentiment-practice-lab-uwr` jako własny adres, jeśli wolny, i kliknij Deploy.
-6. Po wdrożeniu sprawdź `English / Polski`, 24 quizy, symulator, pobranie GoEmotions i trening modelu. Zmiana motywu: menu Streamlit (trzy kropki) → Settings → Theme (Light / Dark).
+1. GoEmotions (Google Research): anotowane komentarze Reddita. Etykiety są ludzkimi interpretacjami, nie „prawdziwymi uczuciami”.
+2. PersuasionForGood (Wang i in. 2019): rzeczywiste dialogi w zadaniu o darowiznach. W aplikacji student oznacza własne hipotezy kodowe według zasad Cialdiniego. Nie ma oficjalnego gold-standardu sześciu zasad w tym korpusie.
+3. Sześć klasycznych zasad Cialdiniego to nie to samo co pięć kategorii perswazji z prezentacji o powodzi; autor obecnie wymienia też siódmą zasadę *unity*.
+4. Model w aplikacji to klasyfikator TF-IDF + regresja logistyczna, NIE BERT. Wyniki TextBlob/BERT z wykładu kryzysowego to wyniki przytoczone, nie przeliczone w tej aplikacji.
+5. GoEmotions i PersuasionForGood pobierane są przez aplikację z publicznych źródeł. Bez internetu interfejs jawnie zgłasza niedostępność danych i nie generuje fikcyjnych „wyników”.
 
-## Ważne granice i dane
+## Bezpieczna aktualizacja istniejącego repozytorium GitHub
 
-- *GoEmotions* to rzeczywiste anglojęzyczne komentarze Reddita z ludzkimi anotacjami 27 emocji + neutral. Aplikacja pobiera **oficjalne pliki test/train** z `https://raw.githubusercontent.com/google-research/google-research/master/goemotions/data/`. Jest wymagany internet podczas pierwszego pobrania.
-- Gdy źródło nie jest dostępne, działa tryb demonstracyjny z wyraźnie oznaczonymi **autorskimi zdaniami**, bez udawania prawdziwego zbioru. Funkcje modelowe są wtedy wyłączone.
-- Model dydaktyczny **nie jest BERT-em**. Trenuje TF-IDF + 8 niezależnych klasyfikatorów logistycznych (one-vs-rest) na próbie 7 500 komentarzy. Wyniki są przybliżonymi score'ami, a nie oceną rzeczywistych uczuć.
-- Słownik dotyczy angielskich słów (nie polskich). Język interfejsu można zmieniać niezależnie od języka danych.
-- Wybrane scenariusze komunikacji kryzysowej są **fikcyjne**. Rozkłady TextBlob i BERT w module są wyłącznie cytowanymi wynikami z dostarczonej prezentacji, nie estymacją aplikacji.
-- Nie wklejaj do publicznej aplikacji prywatnych wiadomości uczestników badań.
+**Repozytorium:** `Firulet/sentiment-practice-lab-uwr`.
 
-## Test na własnym komputerze
+1. Na GitHubie pobierz kopię obecnego repozytorium: **Code > Download ZIP**.
+2. W istniejącym repozytorium podmień w katalogu głównym pliki `app.py`, `content.py`, `requirements.txt`, `README_PL.md`; **dodaj** `experiments.py`.
+3. Folder `.streamlit` zawiera `config.toml`; zachowaj jego lokalizację jako `.streamlit/config.toml`.
+4. Zatwierdź zmiany przez **Commit changes**. Nie trzeba tworzyć nowej aplikacji: istniejący Streamlit automatycznie pobierze nowy commit.
+5. Jeśli aplikacja nie wystartuje, otwórz **Manage app > Logs**. Można bezpiecznie wrócić do poprzedniego commita (lub przywrócić kopię).
 
-```bash
-python -m pip install -r requirements.txt
-streamlit run app.py
-```
+Pliki PDF `Sentiment_Analysis_Lecture_PL_v2.pdf` i `Sentiment_Analysis_Lecture_EN_v2.pdf` są wykładami osobnymi; nie musisz wgrywać ich do repozytorium aplikacji.
 
-Źródła: https://github.com/google-research/google-research/tree/master/goemotions ; https://archive.ics.uci.edu/dataset/331/sentiment+labelled+sentences
+## Test po wdrożeniu
+
+- Przełącz Polski / English.
+- Sprawdź stronę „Metody wyjaśnione”, Jaccard oraz macierz pomyłek.
+- Włącz GoEmotions: sprawdź, czy pojawia się liczba komentarzy testowych.
+- Wytrenuj model i zmień próg. Wartości TP, FP, FN, TN powinny się zmieniać po zmianie progu.
+- W Perswazji poczekaj na pobranie publicznych dialogów; jeśli nie ma dostępu do GitHub raw, sprawdź łączność i logi.
+- W ustawieniach aplikacji Streamlit można przełączyć wygląd na ciemny i upewnić się, że tekst jest czytelny.
+
+## Wymagania i prywatność
+
+Python, Streamlit, pandas, numpy, requests, scikit-learn, altair. Biblioteki są wymienione w `requirements.txt`. Nie ma logowania ani trwałego zapisu pracy studentów. Dane źródłowe zawierają wypowiedzi osób trzecich, dlatego nie należy dopisywać prywatnych wiadomości studentów do publicznego repozytorium.
+
+## Źródła
+
+- https://github.com/google-research/google-research/tree/master/goemotions
+- https://convokit.infosci.cornell.edu/datasets.html
+- https://github.com/persuasion-nlp/persuasion-strategies
+- https://cialdini.com/principles
