@@ -1,9 +1,10 @@
-"""Bilingual, standalone educational sentiment-analysis laboratory.
+ """Bilingual, standalone educational sentiment-analysis laboratory.
 No accounts, no collection, no persistent submission, no private data.
 Real GoEmotions data are fetched on demand from the official Google Research repo.
 """
 import io
 import re
+from html import escape as html_escape
 from collections import Counter
 
 import numpy as np
@@ -16,6 +17,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import precision_recall_fscore_support
 from content import EMOTIONS, EMO_PL, POS, NEG, LEX_POS, LEX_NEG, QUESTIONS, SCENARIOS
+from experiments import render as render_experiment
 
 st.set_page_config(page_title="Sentiment & Emotion Lab | Data Science and Society",page_icon="💬",layout="wide",initial_sidebar_state="expanded")
 st.markdown('''<style>
@@ -31,7 +33,10 @@ pl=lang=="Polski"
 def tr(en,po):return po if pl else en
 def emo(x):return EMO_PL[EMOTIONS.index(x)] if pl and x in EMOTIONS else x
 
-def note(en,po):st.markdown(f'<div class="course-box">{tr(en,po)}</div>',unsafe_allow_html=True)
+def note(en,po):
+    safe=html_escape(tr(en,po))
+    safe=re.sub(r'\*\*(.*?)\*\*',r'<strong>\1</strong>',safe)
+    st.markdown(f'<div class="course-box">{safe}</div>',unsafe_allow_html=True)
 
 st.title(tr("💬 Sentiment & Emotion Analysis","💬 Analiza sentymentu i emocji"))
 st.caption("Introduction to Data Science and Society · University teaching laboratory · English / Polski")
@@ -83,7 +88,7 @@ if real:
 else:
     st.sidebar.warning(tr("Dataset server unavailable: clearly labelled illustrative examples only. No original labels are shown.","Serwer danych niedostępny: pokazujemy jedynie wyraźnie oznaczone przykłady autorskie. Nie pokazujemy etykiet źródłowych."))
 
-nav=[("start",tr("Start: data and concepts","Start: dane i pojęcia")),("lexicon",tr("Word-list simulator","Symulator słownika")),("data",tr("Explore real GoEmotions","Poznaj rzeczywiste GoEmotions")),("multi",tr("Multiple emotions","Wiele emocji")),("model",tr("Train and compare models","Model i porównanie")),("metrics",tr("Evaluation laboratory","Laboratorium ewaluacji")),("cases",tr("Social research scenarios","Scenariusze socjologiczne")),("quiz",tr("24 questions and answers","24 pytania i odpowiedzi")),("reflection",tr("Final research challenge","Końcowe zadanie badawcze"))]
+nav=[("start",tr("Start: data and concepts","Start: dane i pojęcia")),("glossary",tr("Explain every term","Wyjaśnienie pojęć")),("lexicon",tr("Word-list simulator","Symulator słownika")),("data",tr("Explore real GoEmotions","Poznaj rzeczywiste GoEmotions")),("real_lab",tr("Real-data experiment","Eksperyment na danych")),("multi",tr("Multiple emotions","Wiele emocji")),("agreement_lab",tr("Codebook & agreement studio","Klucz kodowy i zgodność")),("model",tr("Train a baseline model","Wytrenuj model bazowy")),("threshold_lab",tr("Threshold on real test data","Próg na rzeczywistych danych")),("metrics",tr("Confusion matrix simulator","Symulator macierzy pomyłek")),("persuasion_lab",tr("Cialdini & real persuasion data","Cialdini i prawdziwe dane perswazji")),("cases",tr("Social research scenarios","Scenariusze socjologiczne")),("final_real",tr("Final research challenge: real data","Wyzwanie końcowe: rzeczywiste dane"))]
 st.sidebar.markdown("### " + tr("Choose an activity","Wybierz ćwiczenie"))
 section=st.sidebar.radio("Activities",[x[0] for x in nav],format_func=lambda x:dict(nav)[x],label_visibility="collapsed")
 st.sidebar.divider()
@@ -132,7 +137,6 @@ if section=="start":
     st.dataframe(pd.DataFrame({tr("Task","Zadanie"):[tr("Sentiment polarity","Polaryzacja sentymentu"),tr("Emotion recognition","Rozpoznawanie emocji"),tr("Stance detection","Wykrywanie stanowiska")],tr("Example","Przykład"):[tr("positive / neutral / negative","pozytywny / neutralny / negatywny"),tr("fear + gratitude","strach + wdzięczność"),tr("in favour of / against a proposal","za / przeciw propozycji")]}),hide_index=True,use_container_width=True)
     note("**Dataset caution:** GoEmotions uses human annotations of Reddit comments, not measurements of inner emotions. The UCI review dataset deliberately contains positive/negative sentences and no neutral class.","**Uwaga o danych:** GoEmotions to anotacje komentarzy Reddita, a nie pomiary wewnętrznych emocji. Zbiór UCI zawiera celowo dobrane recenzje pozytywne i negatywne, bez klasy neutralnej.")
     st.markdown(tr("**Try:** Is 'We need volunteers immediately' neutral in polarity but urgent in communicative function?","**Zastanów się:** Czy 'Potrzebujemy natychmiast ochotników' może być neutralne w polaryzacji, ale pilne komunikacyjnie?"))
-    quiz_widget("start",[(i,q) for i,q in enumerate(QUESTIONS) if q[0]=="basics"])
 
 elif section=="lexicon":
     st.header(tr("Word-list sentiment simulator","Symulator analizy słownikowej"))
@@ -152,7 +156,6 @@ elif section=="lexicon":
     st.latex(r"S = \sum_{w\in text} positive(w) - \sum_{w\in text} negative(w)")
     st.bar_chart(pd.DataFrame({tr("Score","Wynik"):[p,n]},index=[tr("Positive","Pozytywne"),tr("Negative","Negatywne")]))
     st.warning(tr("This is an authored mini-lexicon, NOT TextBlob, BERT or a validated sentiment tool. English word matching only.","To autorski minisłownik, NIE TextBlob, BERT ani zwalidowane narzędzie. Rozpoznaje tylko angielskie słowa."))
-    quiz_widget("lex",[(i,q) for i,q in enumerate(QUESTIONS) if q[0]=="lexicon"])
 
 elif section=="data":
     st.header(tr("Explore the GoEmotions dataset","Eksploracja zbioru GoEmotions"))
@@ -173,7 +176,6 @@ elif section=="data":
         st.caption(tr("Counts are label occurrences, not mutually exclusive percentages. The complete 58k-comment corpus is described by the source; the app loads the official test partition.","Liczby to wystąpienia etykiet, a nie wykluczające się procenty. Źródło opisuje cały korpus 58 tys., aplikacja ładuje oficjalną część testową."))
     else:
         st.warning(tr("The official data could not be downloaded. Return later for real examples. The remaining simulations still work.","Nie udało się pobrać danych oficjalnych. Wróć później po prawdziwe przykłady. Pozostałe symulacje działają."))
-    quiz_widget("data",[(i,q) for i,q in enumerate(QUESTIONS) if q[0]=="emotions"])
 
 elif section=="multi":
     st.header(tr("Multiple emotions and disagreement","Wiele emocji i niezgodność ocen"))
@@ -193,6 +195,8 @@ elif section=="multi":
 elif section=="model":
     st.header(tr("From keywords to a trained classifier","Od słów kluczowych do modelu uczonego"))
     note("**Model:** TF-IDF (1–2-grams) + one-vs-rest logistic regression, trained on a reproducible sample of official GoEmotions training rows. This is NOT BERT. It is a teaching baseline for 8 selected labels.","**Model:** TF-IDF (1–2-gramy) + regresja logistyczna one-vs-rest, uczona na powtarzalnej próbie oficjalnych danych treningowych GoEmotions. To NIE BERT. Jest to dydaktyczny model bazowy dla 8 wybranych etykiet.")
+    with st.expander(tr("Explain the model in plain language","Wyjaśnienie modelu prostym językiem"),expanded=True):
+        st.write(tr("1-gram = one word; 2-gram = two neighboring words (like 'not good'). TF-IDF converts phrases into numerical features. Logistic regression learns links between those features and emotion labels. One-vs-rest trains eight separate yes/no classifiers, one for each chosen label. These results are NOT a BERT model and are not proof of feelings.","1-gram = pojedyncze słowo; 2-gram = dwa kolejne słowa (np. 'not good'). TF-IDF zamienia wyrażenia na cechy liczbowe. Regresja logistyczna uczy się związku cech z etykietami emocji. One-vs-rest to osiem osobnych klasyfikatorów tak/nie, po jednym dla każdej etykiety. To NIE BERT i nie jest to dowód uczuć autora."))
     if real:
         st.write(tr("Model training is optional and can take a short moment. No student text is sent to any external AI API.","Uczenie modelu jest opcjonalne. Tekst studentów nie jest wysyłany do zewnętrznego API AI."))
         if st.button(tr("Train/load the classroom model","Naucz/wczytaj model dydaktyczny"),type="primary"):
@@ -210,11 +214,12 @@ elif section=="model":
             st.write(tr("Lexicon result:","Wynik słownika:"),sentiment_label(lex_score),"·",tr("highest model score:","najwyższy wynik modelu:"),emo(indexed[0][0]))
             st.caption(tr("Scores are separate binary classifier outputs; they need not sum to 1 and are not automatically calibrated.","Wyniki pochodzą z osobnych klasyfikatorów binarnych; nie muszą sumować się do 1 i nie są automatycznie skalibrowane."))
     else:st.warning(tr("The external data cannot currently be loaded, so training is disabled. No fake model predictions are generated.","Obecnie nie można pobrać danych, dlatego uczenie jest wyłączone. Nie generujemy fikcyjnych predykcji modelu."))
-    quiz_widget("model",[(i,q) for i,q in enumerate(QUESTIONS) if q[0]=="models"])
 
 elif section=="metrics":
     st.header(tr("Interactive precision, recall and F1","Interaktywne precision, recall i F1"))
     st.write(tr("Adjust a confusion matrix for one chosen emotion. The values here are a hypothetical simulation, not measured model results.","Zmieniaj macierz pomyłek dla jednej wybranej emocji. To symulacja hipotetyczna, a nie zmierzone wyniki modelu."))
+    with st.expander(tr("What do TP, FP, FN and TN mean? (with a social-science example)","Co oznaczają TP, FP, FN i TN? (przykład socjologiczny)"),expanded=True):
+        st.write(tr("Imagine detecting fear in 100 comments. TP = fear was annotated and detected; FP = model said fear but annotation did not; FN = model missed an annotated fear; TN = both say no fear. Precision asks how often a fear alarm is justified; recall asks how many fear cases were found. F1 balances both.","Wyobraź sobie rozpoznawanie strachu w 100 komentarzach. TP = anotator wskazał strach i model go wykrył; FP = model wskazał strach, ale anotator nie; FN = model przeoczył strach; TN = zgodnie nie wykryto strachu. Precision mówi, jaki odsetek alarmów jest zasadny; recall — ile przypadków znaleziono. F1 łączy obie miary."))
     c1,c2,c3,c4=st.columns(4)
     tp=c1.slider("TP",0,100,32);fp=c2.slider("FP",0,100,8)
     fn=c3.slider("FN",0,100,12);tn=c4.slider("TN",0,100,48)
@@ -225,7 +230,6 @@ elif section=="metrics":
     st.dataframe(pd.DataFrame([[tp,fn],[fp,tn]],index=[tr("Actual positive","Rzeczywiście pozytywne"),tr("Actual negative","Rzeczywiście negatywne")],columns=[tr("Predicted positive","Przewidziane pozytywne"),tr("Predicted negative","Przewidziane negatywne")]),use_container_width=True)
     st.latex(r"Precision=\frac{TP}{TP+FP},\quad Recall=\frac{TP}{TP+FN},\quad F1=\frac{2PR}{P+R}")
     st.write(tr("Try increasing false positives (FP). What happens to precision? Now increase false negatives (FN). What happens to recall?","Zwiększ fałszywie pozytywne (FP). Co dzieje się z precision? Potem zwiększ fałszywie negatywne (FN). Co dzieje się z recall?"))
-    quiz_widget("eval",[(i,q) for i,q in enumerate(QUESTIONS) if q[0]=="evaluation"])
 
 elif section=="cases":
     st.header(tr("Social research scenarios and simulations","Scenariusze i symulacje socjologiczne"))
@@ -242,20 +246,8 @@ elif section=="cases":
     st.dataframe(pd.DataFrame({"TextBlob (3 labels)":["93.82% neutral","5.73% positive","0.45% negative"],"BERT (5 labels)":["38.8% very negative","21.1% very positive","18.4% neutral"]}),hide_index=True)
     st.caption(tr("The two approaches use different label sets. Do not treat this table as a matched accuracy evaluation. See the original course deck for the complete five-label BERT breakdown.","Metody używają różnych zbiorów etykiet. Tabela nie jest porównaniem dokładności modeli. Pełne pięć kategorii BERT znajduje się w prezentacji źródłowej."))
 
-elif section=="quiz":
-    st.header(tr("Concept questions – learn by explaining","Pytania pojęciowe – ucz się, wyjaśniając"))
-    chosen=st.selectbox(tr("Concept area","Dział tematyczny"),["all","basics","lexicon","emotions","models","evaluation","ethics"],format_func=lambda x:{"all":tr("All 24 questions","Wszystkie 24 pytania"),"basics":tr("Basics","Podstawy"),"lexicon":tr("Lexicon","Słownik"),"emotions":tr("Emotions","Emocje"),"models":tr("Models","Modele"),"evaluation":tr("Evaluation","Ewaluacja"),"ethics":tr("Ethics","Etyka")}[x])
-    subset=[(i,q) for i,q in enumerate(QUESTIONS) if chosen=="all" or q[0]==chosen]
-    quiz_widget("allquiz",subset)
-
-elif section=="reflection":
-    st.header(tr("Your final research challenge","Końcowe wyzwanie badawcze"))
-    st.write(tr("You are studying messages from students discussing AI in higher education. Design a scientifically responsible sentiment study.","Badasz wiadomości studentów dyskutujących o AI na uczelni. Zaprojektuj odpowiedzialne naukowo badanie sentymentu."))
-    prompts=[( "Define the unit of analysis and sampling strategy.","Zdefiniuj jednostkę analizy i sposób doboru próby."),("Choose between polarity labels and multi-label emotions. Explain why.","Wybierz polaryzację lub wieloetykietowe emocje. Uzasadnij."),("How will you check disagreement among human annotators?","Jak sprawdzisz niezgodności między ludzkimi anotatorami?"),("How will you validate a model on unseen examples?","Jak zweryfikujesz model na niewidzianych przykładach?"),("What can you infer and what remains uncertain?","Co można wnioskować, a co pozostaje niepewne?"),("How will you protect participants and third parties?","Jak ochronisz uczestników i osoby trzecie?")]
-    for i,(en,po) in enumerate(prompts):
-        st.text_area(f"{i+1}. {po if pl else en}",key=f"research_{i}",height=75)
-    st.info(tr("Practice-only text boxes: no saving or sending. You may copy your answers manually.","Pola służą wyłącznie do ćwiczeń: bez zapisu i wysyłania. Możesz ręcznie skopiować swoje odpowiedzi."))
-    quiz_widget("ethics",[(i,q) for i,q in enumerate(QUESTIONS) if q[0]=="ethics"])
+elif section in {"glossary","real_lab","agreement_lab","threshold_lab","persuasion_lab","final_real"}:
+    render_experiment(section,test,real,pl,tr,emo,train_classifier)
 
 st.divider()
-st.caption("Sources: Kotzias et al. (2015), UCI Sentiment Labelled Sentences · Demszky et al. (2020), GoEmotions (Google Research) · Course case study: Sentiment Analysis in Crisis Situations (provided lecture presentation). No persistent student-data collection.")
+st.caption("Sources: UCI Sentiment Labelled Sentences · Google Research GoEmotions · PersuasionForGood (Wang et al., 2019) · Cialdini classic principles · Supplied Wrocław flood-study presentation. No persistent student-data collection.")
