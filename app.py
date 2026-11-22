@@ -1,4 +1,4 @@
- """Bilingual, standalone educational sentiment-analysis laboratory.
+"""Bilingual, standalone educational sentiment-analysis laboratory.
 No accounts, no collection, no persistent submission, no private data.
 Real GoEmotions data are fetched on demand from the official Google Research repo.
 """
